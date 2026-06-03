@@ -48,7 +48,7 @@ uuid = { version = "1", features = ["v4"] }
 # Time
 chrono = { version = "0.4", features = ["serde"] }
 # WebSocket client (for TUI)
-tokio-tungstenite = { version = "0.24", features = ["rustls-tls"] }
+tokio-tungstenite = { version = "0.24", features = ["__rustls-tls"] }
 
 [profile.release]
 opt-level = "z"
