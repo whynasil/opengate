@@ -1,0 +1,44 @@
+name: OpenCode Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  audit:
+    name: OpenCode PR Review
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install OpenCode
+        run: npm i -g opencode-ai@latest
+      - name: Run OpenCode Audit
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: |
+          opencode pr ${{ github.event.pull_request.number }} \
+            --model anthropic/claude-sonnet-4 \
+            --format json > audit.json
+      - name: Post Audit Results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const audit = JSON.parse(fs.readFileSync('audit.json', 'utf8'));
+            const findings = audit.conversation?.messages
+              ?.filter(m => m.role === 'assistant')
+              ?.map(m => m.content)
+              ?.join('\n\n---\n\n') || 'No findings';
+            const body = `## 🤖 OpenCode Audit\n\n${findings}\n\n---\n*Automated by [OpenCode](https://opencode.ai)*`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });

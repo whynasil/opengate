@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "rules": [
+    "Always run `cargo check` before committing",
+    "Always run `cargo fmt` and `cargo clippy -- -D warnings` before pushing",
+    "Use thiserror for error types, never unwrap() in production code",
+    "Follow the plan at https://github.com/whynasil/opengate/blob/main/.hermes/plans/opengate-architecture.md",
+    "Each task = one commit. Commit message format: type: description (closes #N)",
+    "Do NOT add dependencies without discussion",
+    "Do NOT add features outside the current phase",
+    "Prefer &str over String in function signatures where possible",
+    "Use Arc<dyn Trait> for shared state, not global statics"
+  ],
+  "ignored": [
+    "target/",
+    ".git/",
+    "*.lock"
+  ]
+}

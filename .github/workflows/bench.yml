@@ -1,0 +1,30 @@
+name: Benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'src/**.rs'
+      - 'Cargo.toml'
+
+jobs:
+  bench:
+    name: cargo bench diff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install critcmp
+        run: cargo install critcmp
+      - name: Bench on main
+        run: |
+          git checkout main
+          cargo bench --workspace -- --save-baseline main
+      - name: Bench on PR
+        run: |
+          git checkout -
+          cargo bench --workspace -- --save-baseline pr
+      - name: Compare
+        run: critcmp main pr
