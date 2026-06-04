@@ -7,13 +7,14 @@ use axum::{
     },
     response::IntoResponse,
     routing::get,
-    Router,
+    Json, Router,
 };
 use futures::{
     sink::SinkExt,
     stream::{SplitSink, StreamExt},
 };
 use serde::{Deserialize, Serialize};
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{info, warn};
 
 use crate::config;
@@ -39,6 +40,36 @@ pub enum ServerMessage {
 }
 
 // ---------------------------------------------------------------------------
+// Health
+// ---------------------------------------------------------------------------
+
+#[derive(Serialize)]
+struct HealthResponse {
+    status: &'static str,
+    version: &'static str,
+}
+
+async fn health_handler() -> Json<HealthResponse> {
+    Json(HealthResponse {
+        status: "ok",
+        version: "0.1.0",
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Router builder
+// ---------------------------------------------------------------------------
+
+pub fn build_router(state: Arc<Gateway>) -> Router {
+    Router::new()
+        .route("/health", get(health_handler))
+        .route("/", get(ws_upgrade_handler))
+        .with_state(state)
+        .layer(TraceLayer::new_for_http())
+        .layer(CorsLayer::permissive())
+}
+
+// ---------------------------------------------------------------------------
 // Gateway
 // ---------------------------------------------------------------------------
 
@@ -56,11 +87,7 @@ impl Gateway {
     pub async fn start(self) {
         let addr = format!("{}:{}", self.config.gateway.host, self.config.gateway.port);
         let state = Arc::new(self);
-
-        let app = Router::new()
-            .route("/health", get(health_handler))
-            .route("/", get(ws_upgrade_handler))
-            .with_state(state);
+        let app = build_router(state);
 
         info!("Gateway listening on {addr}");
 
@@ -76,10 +103,6 @@ impl Gateway {
 // ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
-
-async fn health_handler() -> &'static str {
-    "OK"
-}
 
 async fn ws_upgrade_handler(
     ws: WebSocketUpgrade,
