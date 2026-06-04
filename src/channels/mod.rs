@@ -1,3 +1,6 @@
+//! Messaging channel abstraction — Telegram, Webhook, and extensible
+//! channel types for delivering agent responses to users.
+
 pub mod webhook;
 pub mod telegram;
 

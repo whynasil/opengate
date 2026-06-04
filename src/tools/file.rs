@@ -18,14 +18,8 @@ pub struct FileTool {
 impl FileTool {
     pub fn new(workspace_root: String) -> Self {
         let path = PathBuf::from(&workspace_root);
-        let canonical = if path.exists() {
-            path.canonicalize().unwrap_or(path)
-        } else {
-            path
-        };
-        Self {
-            workspace_root: canonical,
-        }
+        let canonical = if path.exists() { path.canonicalize().unwrap_or(path) } else { path };
+        Self { workspace_root: canonical }
     }
 
     fn resolve_path(&self, path: &str) -> Result<PathBuf, String> {
@@ -39,9 +33,8 @@ impl FileTool {
         let resolved = self.workspace_root.join(path);
 
         if resolved.exists() {
-            let canonical = resolved
-                .canonicalize()
-                .map_err(|e| format!("Failed to resolve path: {}", e))?;
+            let canonical =
+                resolved.canonicalize().map_err(|e| format!("Failed to resolve path: {}", e))?;
             if !canonical.starts_with(&self.workspace_root) {
                 return Err("Path escapes workspace root".to_string());
             }
@@ -55,9 +48,8 @@ impl FileTool {
                 None => return Err("Path is outside filesystem root".to_string()),
             }
         }
-        let canonical_parent = parent
-            .canonicalize()
-            .map_err(|e| format!("Failed to resolve path: {}", e))?;
+        let canonical_parent =
+            parent.canonicalize().map_err(|e| format!("Failed to resolve path: {}", e))?;
         if !canonical_parent.starts_with(&self.workspace_root) {
             return Err("Path escapes workspace root".to_string());
         }
@@ -68,9 +60,8 @@ impl FileTool {
     async fn action_read(&self, path: &str) -> Result<ToolOutput, String> {
         let resolved = self.resolve_path(path)?;
 
-        let file = fs::File::open(&resolved)
-            .await
-            .map_err(|e| format!("Failed to open file: {}", e))?;
+        let file =
+            fs::File::open(&resolved).await.map_err(|e| format!("Failed to open file: {}", e))?;
 
         let mut contents = Vec::new();
         file.take(MAX_READ_SIZE as u64 + 1)
@@ -104,9 +95,7 @@ impl FileTool {
                 .map_err(|e| format!("Failed to create parent directories: {}", e))?;
         }
 
-        fs::write(&resolved, content)
-            .await
-            .map_err(|e| format!("Failed to write file: {}", e))?;
+        fs::write(&resolved, content).await.map_err(|e| format!("Failed to write file: {}", e))?;
 
         Ok(ToolOutput::Text(format!(
             "Successfully wrote {} bytes to {}",
@@ -116,11 +105,8 @@ impl FileTool {
     }
 
     async fn action_list(&self, path: &str) -> Result<ToolOutput, String> {
-        let base = if path.is_empty() {
-            self.workspace_root.clone()
-        } else {
-            self.resolve_path(path)?
-        };
+        let base =
+            if path.is_empty() { self.workspace_root.clone() } else { self.resolve_path(path)? };
 
         if !base.is_dir() {
             return Err(format!("Path is not a directory: {}", base.display()));
@@ -153,10 +139,7 @@ impl FileTool {
 
         let mut result = entries.join("\n");
         if entries.len() > MAX_LIST_ENTRIES {
-            result.push_str(&format!(
-                "\n... (listing truncated at {} entries)",
-                MAX_LIST_ENTRIES
-            ));
+            result.push_str(&format!("\n... (listing truncated at {} entries)", MAX_LIST_ENTRIES));
         }
 
         Ok(ToolOutput::Text(result))
@@ -205,24 +188,18 @@ impl Tool for FileTool {
             .and_then(|v| v.as_str())
             .ok_or_else(|| "Missing required parameter: action".to_string())?;
 
-        let path = params
-            .get("path")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
+        let path = params.get("path").and_then(|v| v.as_str()).unwrap_or("");
 
         match action {
             "read" => self.action_read(path).await,
             "write" => {
-                let content = params.get("content").and_then(|v| v.as_str()).ok_or_else(
-                    || "Missing required parameter: content for write action".to_string(),
-                )?;
+                let content = params.get("content").and_then(|v| v.as_str()).ok_or_else(|| {
+                    "Missing required parameter: content for write action".to_string()
+                })?;
                 self.action_write(path, content).await
             }
             "list" => self.action_list(path).await,
-            _ => Err(format!(
-                "Unknown action: {}. Must be one of: read, write, list",
-                action
-            )),
+            _ => Err(format!("Unknown action: {}. Must be one of: read, write, list", action)),
         }
     }
 }
@@ -276,8 +253,7 @@ mod tests {
     async fn test_write_file() {
         let dir = tempfile::TempDir::new().unwrap();
         let tool = FileTool::new(dir.path().to_string_lossy().to_string());
-        let params =
-            json!({"action": "write", "path": "new_file.txt", "content": "test content"});
+        let params = json!({"action": "write", "path": "new_file.txt", "content": "test content"});
         let result = tool.execute(params).await.unwrap();
 
         match result {
@@ -298,8 +274,7 @@ mod tests {
 
         assert!(matches!(result, ToolOutput::Text(_)));
 
-        let content =
-            std::fs::read_to_string(dir.path().join("a/b/c/deep.txt")).unwrap();
+        let content = std::fs::read_to_string(dir.path().join("a/b/c/deep.txt")).unwrap();
         assert_eq!(content, "deep");
     }
 

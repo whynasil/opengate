@@ -12,11 +12,7 @@ pub struct OllamaBackend {
 
 impl OllamaBackend {
     pub fn new(host: impl Into<String>, model: impl Into<String>) -> Self {
-        Self {
-            host: host.into(),
-            model: model.into(),
-            client: Client::new(),
-        }
+        Self { host: host.into(), model: model.into(), client: Client::new() }
     }
 }
 
@@ -65,10 +61,7 @@ impl LlmBackend for OllamaBackend {
             .ok_or_else(|| LlmError::Api("No content in response".to_string()))
     }
 
-    async fn stream_chat(
-        &self,
-        messages: Vec<LlmMessage>,
-    ) -> Result<ChatStream, LlmError> {
+    async fn stream_chat(&self, messages: Vec<LlmMessage>) -> Result<ChatStream, LlmError> {
         let url = format!("{}/api/chat", self.host.trim_end_matches('/'));
 
         let ollama_messages: Vec<serde_json::Value> = messages
@@ -122,14 +115,12 @@ impl LlmBackend for OllamaBackend {
                                 continue;
                             }
 
-                            if let Ok(parsed) =
-                                serde_json::from_str::<serde_json::Value>(line)
-                            {
-                                if let Some(content) =
-                                    parsed["message"]["content"].as_str()
-                                    && !content.is_empty() {
-                                        let _ = tx.send(Ok(content.to_string()));
-                                    }
+                            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(line) {
+                                if let Some(content) = parsed["message"]["content"].as_str()
+                                    && !content.is_empty()
+                                {
+                                    let _ = tx.send(Ok(content.to_string()));
+                                }
                                 if parsed["done"].as_bool() == Some(true) {
                                     return;
                                 }

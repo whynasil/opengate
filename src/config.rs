@@ -1,3 +1,6 @@
+//! Configuration system — TOML parsing with `${ENV_VAR}` interpolation,
+//! multi-model provider config, channel credentials, and workspace settings.
+
 use std::collections::HashMap;
 use std::path::Path;
 use thiserror::Error;

@@ -1,3 +1,6 @@
+//! Storage layer — SQLite-backed persistent storage with
+//! connection pooling, WAL mode, and schema migration.
+
 pub mod memory;
 
 use chrono::Utc;

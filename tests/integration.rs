@@ -1,28 +1,21 @@
+use async_trait::async_trait;
+use opengate::channels::telegram::TelegramChannel;
+use opengate::channels::webhook::WebhookChannel;
+use opengate::channels::{Channel, ChannelId, ChannelManager, ChannelMessage};
 use opengate::config::Config;
 use opengate::session::SessionPool;
 use opengate::storage::Storage;
-use opengate::tools::{self, Tool, ToolOutput};
-use opengate::tools::terminal::TerminalTool;
 use opengate::tools::file::FileTool;
-use opengate::channels::{Channel, ChannelId, ChannelManager, ChannelMessage};
-use opengate::channels::webhook::WebhookChannel;
-use opengate::channels::telegram::TelegramChannel;
-use async_trait::async_trait;
+use opengate::tools::terminal::TerminalTool;
+use opengate::tools::{self, Tool, ToolOutput};
 use serde_json::json;
 use std::sync::Arc;
-use std::env;
 
 // ── Config ──
 
 #[test]
 fn test_load_default_config() {
-    unsafe {
-        env::set_var("OPENGATE_AUTH_TOKEN", "test-token");
-        env::set_var("OPENAI_API_KEY", "test-openai-key");
-        env::set_var("ANTHROPIC_API_KEY", "test-anthropic-key");
-        env::set_var("TELEGRAM_BOT_TOKEN", "test-telegram-token");
-    }
-    let config = Config::load("config/default.toml").expect("Failed to load default config");
+    let config = Config::load("config/test.toml").expect("Failed to load test config");
     assert_eq!(config.gateway.host, "127.0.0.1");
     assert_eq!(config.gateway.port, 9378);
     assert_eq!(config.models.len(), 3);
@@ -111,10 +104,8 @@ fn test_webhook_channel_registration() {
 
 #[test]
 fn test_telegram_allowed_users() {
-    let channel = TelegramChannel::new(
-        "dummy-token".to_string(),
-        vec!["123".to_string(), "456".to_string()],
-    );
+    let channel =
+        TelegramChannel::new("dummy-token".to_string(), vec!["123".to_string(), "456".to_string()]);
     assert!(channel.is_allowed("123"));
     assert!(!channel.is_allowed("999"));
 }
@@ -124,8 +115,14 @@ async fn test_channel_manager_send() {
     struct EchoChannel;
     #[async_trait]
     impl Channel for EchoChannel {
-        fn name(&self) -> &str { "echo" }
-        async fn send_message(&self, _session_id: &str, _msg: ChannelMessage) -> Result<(), String> {
+        fn name(&self) -> &str {
+            "echo"
+        }
+        async fn send_message(
+            &self,
+            _session_id: &str,
+            _msg: ChannelMessage,
+        ) -> Result<(), String> {
             Ok(())
         }
     }
@@ -134,8 +131,6 @@ async fn test_channel_manager_send() {
     let id = ChannelId::new("echo");
     manager.register(id.clone(), Box::new(EchoChannel));
 
-    let result = manager
-        .send(&id, "s1", ChannelMessage::Text { text: "hi".into() })
-        .await;
+    let result = manager.send(&id, "s1", ChannelMessage::Text { text: "hi".into() }).await;
     assert!(result.is_ok());
 }

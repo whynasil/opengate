@@ -11,10 +11,7 @@ pub struct TelegramChannel {
 
 impl TelegramChannel {
     pub fn new(token: impl Into<String>, allowed_users: Vec<String>) -> Self {
-        Self {
-            bot: Bot::new(token),
-            allowed_users,
-        }
+        Self { bot: Bot::new(token), allowed_users }
     }
 
     pub fn add_allowed_user(&mut self, user_id: String) {
@@ -35,9 +32,8 @@ impl Channel for TelegramChannel {
     }
 
     async fn send_message(&self, session_id: &str, msg: ChannelMessage) -> ChannelResult<()> {
-        let chat_id: i64 = session_id
-            .parse()
-            .map_err(|e| format!("Invalid chat ID '{session_id}': {e}"))?;
+        let chat_id: i64 =
+            session_id.parse().map_err(|e| format!("Invalid chat ID '{session_id}': {e}"))?;
         let text = match &msg {
             ChannelMessage::Text { text } => text.clone(),
             ChannelMessage::Reply { text } => format!("Reply: {text}"),

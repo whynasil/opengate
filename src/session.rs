@@ -1,3 +1,6 @@
+//! Session management — session lifecycle (create, get, delete)
+//! and message history tracking.
+
 use std::collections::HashMap;
 use std::sync::Arc;
 

@@ -1,3 +1,6 @@
+//! LLM backend abstraction — OpenAI-compatible + Anthropic + Ollama
+//! with chat and streaming support.
+
 use std::future::Future;
 use std::pin::Pin;
 

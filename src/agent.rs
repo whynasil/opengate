@@ -1,3 +1,6 @@
+//! Agent loop — processes user messages through LLM backends
+//! with tool execution and multi-turn conversation support.
+
 use std::collections::HashMap;
 use std::sync::Arc;
 

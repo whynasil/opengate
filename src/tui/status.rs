@@ -1,9 +1,9 @@
 use ratatui::{
+    Frame,
     layout::Rect,
     style::{Style, Stylize},
     text::Line,
     widgets::{Block, Paragraph},
-    Frame,
 };
 
 use crate::config;
@@ -21,18 +21,15 @@ pub fn render_status_bar(
     config: &config::Config,
 ) {
     let (status_text, _status_style) = match connection {
-        ConnectionState::Connected => (
-            "● Connected",
-            Style::default().fg(theme.status_connected).bold(),
-        ),
-        ConnectionState::Connecting => (
-            "◐ Connecting...",
-            Style::default().fg(theme.accent).bold(),
-        ),
-        ConnectionState::Disconnected => (
-            "○ Disconnected",
-            Style::default().fg(theme.status_disconnected).bold(),
-        ),
+        ConnectionState::Connected => {
+            ("● Connected", Style::default().fg(theme.status_connected).bold())
+        }
+        ConnectionState::Connecting => {
+            ("◐ Connecting...", Style::default().fg(theme.accent).bold())
+        }
+        ConnectionState::Disconnected => {
+            ("○ Disconnected", Style::default().fg(theme.status_disconnected).bold())
+        }
     };
 
     let addr = format!("{}:{}", config.gateway.host, config.gateway.port);
@@ -53,9 +50,7 @@ pub fn render_status_bar(
         .border_style(Style::default().fg(theme.border))
         .style(Style::default().bg(theme.bg));
 
-    let paragraph = Paragraph::new(line)
-        .block(block)
-        .style(Style::default().bg(theme.bg));
+    let paragraph = Paragraph::new(line).block(block).style(Style::default().bg(theme.bg));
 
     f.render_widget(paragraph, area);
 }

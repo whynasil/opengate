@@ -42,11 +42,17 @@ enum ConfigCmd {
     },
 }
 
-async fn do_serve(config_path: &str) {
+/// Convert a path to a lossy UTF-8 string for display/error messages.
+fn path_display(p: &Path) -> String {
+    p.to_string_lossy().into_owned()
+}
+
+async fn do_serve(config_path: &Path) {
+    let path_str = path_display(config_path);
     let config = match config::Config::load(config_path) {
         Ok(cfg) => cfg,
         Err(e) => {
-            eprintln!("error: failed to load config from '{config_path}': {e}");
+            eprintln!("error: failed to load config from '{path_str}': {e}");
             std::process::exit(1);
         }
     };
@@ -74,7 +80,7 @@ fn do_config_path() {
     println!("config/default.toml");
 }
 
-fn do_config_validate(config_path: &str) {
+fn do_config_validate(config_path: &Path) {
     match config::Config::load(config_path) {
         Ok(_) => println!("Config valid"),
         Err(e) => {
@@ -84,19 +90,13 @@ fn do_config_validate(config_path: &str) {
     }
 }
 
-fn path_to_str(p: &Path) -> &str {
-    // Use lossy conversion — non-UTF8 paths are extremely rare
-    // and the config file path is always ASCII anyway.
-    Box::leak(p.to_string_lossy().into_owned().into_boxed_str())
-}
-
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
 
     match cli.command {
         Commands::Serve { ref config } => {
-            do_serve(path_to_str(config)).await;
+            do_serve(config).await;
         }
         Commands::Tui => {
             do_tui();
@@ -106,7 +106,7 @@ async fn main() {
                 do_config_path();
             }
             ConfigCmd::Validate { ref config } => {
-                do_config_validate(path_to_str(config));
+                do_config_validate(config);
             }
         },
     }

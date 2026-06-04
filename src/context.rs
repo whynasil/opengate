@@ -1,3 +1,6 @@
+//! Context builder — assembles LLM conversation context
+//! from session history, system prompt, and user message.
+
 use std::sync::Arc;
 
 use crate::session::SessionPool;

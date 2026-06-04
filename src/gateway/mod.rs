@@ -1,3 +1,6 @@
+//! WebSocket gateway — MessagePack protocol over WebSocket,
+//! authentication, bidirectional messaging, session routing.
+
 use std::sync::Arc;
 
 use axum::{

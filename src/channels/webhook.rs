@@ -1,11 +1,5 @@
 use async_trait::async_trait;
-use axum::{
-    Json, Router,
-    extract::State,
-    http::StatusCode,
-    response::IntoResponse,
-    routing::post,
-};
+use axum::{Json, Router, extract::State, http::StatusCode, response::IntoResponse, routing::post};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -139,9 +133,7 @@ pub async fn webhook_handler(
 // ---------------------------------------------------------------------------
 
 pub fn webhook_router(state: Arc<WebhookState>) -> Router {
-    Router::new()
-        .route("/webhook", post(webhook_handler))
-        .with_state(state)
+    Router::new().route("/webhook", post(webhook_handler)).with_state(state)
 }
 
 // ---------------------------------------------------------------------------
@@ -151,8 +143,8 @@ pub fn webhook_router(state: Arc<WebhookState>) -> Router {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::channels::ChannelManager;
     use crate::channels::ChannelId;
+    use crate::channels::ChannelManager;
 
     #[test]
     fn test_webhook_channel_name() {
@@ -163,11 +155,7 @@ mod tests {
     #[tokio::test]
     async fn test_webhook_channel_send_is_noop() {
         let channel = WebhookChannel::new(None);
-        let result = channel
-            .send_message("test", ChannelMessage::Text {
-                text: "hi".into(),
-            })
-            .await;
+        let result = channel.send_message("test", ChannelMessage::Text { text: "hi".into() }).await;
         assert!(result.is_ok());
     }
 

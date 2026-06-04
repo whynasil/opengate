@@ -1,10 +1,5 @@
 use crossterm::event::KeyEvent;
-use ratatui::{
-    layout::Rect,
-    style::Style,
-    widgets::Block,
-    Frame,
-};
+use ratatui::{Frame, layout::Rect, style::Style, widgets::Block};
 use tui_textarea::TextArea;
 
 use super::theme::Theme;

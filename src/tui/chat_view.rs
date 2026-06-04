@@ -1,9 +1,9 @@
 use ratatui::{
+    Frame,
     layout::Rect,
     style::{Style, Stylize},
     text::Span,
     widgets::{Block, List, ListItem, ListState},
-    Frame,
 };
 
 use super::app::ChatMessage;
@@ -21,9 +21,7 @@ impl Default for ChatView {
 
 impl ChatView {
     pub fn new() -> Self {
-        Self {
-            list_state: ListState::default(),
-        }
+        Self { list_state: ListState::default() }
     }
 
     pub fn render(
@@ -48,7 +46,9 @@ impl ChatView {
                     "assistant" => {
                         Span::styled("Assistant", Style::default().fg(theme.assistant_msg).bold())
                     }
-                    "system" => Span::styled("System", Style::default().fg(theme.system_msg).bold()),
+                    "system" => {
+                        Span::styled("System", Style::default().fg(theme.system_msg).bold())
+                    }
                     "tool" => Span::styled("Tool", Style::default().fg(theme.tool_msg).bold()),
                     other => Span::styled(other, Style::default().fg(theme.dim_text)),
                 };

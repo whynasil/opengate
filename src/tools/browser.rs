@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 use base64::Engine;
+use chromiumoxide::page::ScreenshotParams;
+use chromiumoxide::{Browser, BrowserConfig, Page};
 use futures::StreamExt;
 use serde_json::Value;
 use tokio::sync::Mutex;
-use chromiumoxide::{Browser, BrowserConfig, Page};
-use chromiumoxide::page::ScreenshotParams;
 
 use crate::tools::{Tool, ToolDef, ToolOutput};
 
@@ -16,9 +16,7 @@ pub struct BrowserTool {
 
 impl std::fmt::Debug for BrowserTool {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BrowserTool")
-            .field("chrome_path", &self.chrome_path)
-            .finish()
+        f.debug_struct("BrowserTool").field("chrome_path", &self.chrome_path).finish()
     }
 }
 
@@ -32,11 +30,7 @@ impl BrowserTool {
     pub fn new() -> Self {
         let chrome_path =
             std::env::var("CHROME_PATH").unwrap_or_else(|_| "/usr/bin/chromium".to_string());
-        Self {
-            browser: Mutex::new(None),
-            page: Mutex::new(None),
-            chrome_path,
-        }
+        Self { browser: Mutex::new(None), page: Mutex::new(None), chrome_path }
     }
 
     async fn ensure_browser(&self) -> Result<(), String> {
@@ -54,9 +48,7 @@ impl BrowserTool {
         .await
         .map_err(|e| format!("Failed to launch browser: {}", e))?;
 
-        tokio::spawn(async move {
-            while let Some(_event) = handler.next().await {}
-        });
+        tokio::spawn(async move { while let Some(_event) = handler.next().await {} });
 
         let page = browser
             .new_page("about:blank")
@@ -73,7 +65,9 @@ impl BrowserTool {
             .strip_prefix('@')
             .and_then(|s| s.strip_prefix('e'))
             .and_then(|s| s.parse::<usize>().ok())
-            .ok_or_else(|| format!("Invalid element ref '{}': expected format @e1, @e2, etc.", ref_str))?;
+            .ok_or_else(|| {
+                format!("Invalid element ref '{}': expected format @e1, @e2, etc.", ref_str)
+            })?;
         if index == 0 {
             return Err(format!("Invalid element ref '{}': index must be >= 1", ref_str));
         }
@@ -116,9 +110,7 @@ impl BrowserTool {
         let page_guard = self.page.lock().await;
         let page = page_guard.as_ref().ok_or("Browser not initialized")?;
 
-        page.goto(url)
-            .await
-            .map_err(|e| format!("Navigation to '{}' failed: {}", url, e))?;
+        page.goto(url).await.map_err(|e| format!("Navigation to '{}' failed: {}", url, e))?;
 
         let snapshot = self.snapshot_page(page).await?;
         Ok(ToolOutput::Text(snapshot))
@@ -222,7 +214,8 @@ impl Tool for BrowserTool {
     fn schema(&self) -> ToolDef {
         ToolDef {
             name: "browser".into(),
-            description: "Control a headless browser: navigate, snapshot, click, type, and screenshot".into(),
+            description:
+                "Control a headless browser: navigate, snapshot, click, type, and screenshot".into(),
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -257,10 +250,9 @@ impl Tool for BrowserTool {
 
         match action {
             "navigate" => {
-                let url = params
-                    .get("url")
-                    .and_then(|v| v.as_str())
-                    .ok_or_else(|| "Missing required parameter: url for navigate action".to_string())?;
+                let url = params.get("url").and_then(|v| v.as_str()).ok_or_else(|| {
+                    "Missing required parameter: url for navigate action".to_string()
+                })?;
                 self.action_navigate(url).await
             }
             "snapshot" => self.action_snapshot().await,
@@ -271,9 +263,10 @@ impl Tool for BrowserTool {
                 self.action_click(ref_str).await
             }
             "type" => {
-                let ref_str = params.get("ref").and_then(|v| v.as_str()).ok_or_else(|| {
-                    "Missing required parameter: ref for type action".to_string()
-                })?;
+                let ref_str = params
+                    .get("ref")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| "Missing required parameter: ref for type action".to_string())?;
                 let text = params.get("text").and_then(|v| v.as_str()).ok_or_else(|| {
                     "Missing required parameter: text for type action".to_string()
                 })?;

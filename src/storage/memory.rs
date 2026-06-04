@@ -31,10 +31,7 @@ impl MemoryStore {
 
     /// Initialize the memory table if it doesn't exist.
     pub fn init(&self) -> Result<(), String> {
-        let conn = self
-            .pool
-            .get()
-            .map_err(|e| format!("DB connection error: {e}"))?;
+        let conn = self.pool.get().map_err(|e| format!("DB connection error: {e}"))?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS memory (
@@ -53,10 +50,7 @@ impl MemoryStore {
 
     /// Set a memory key-value pair.
     pub fn set(&self, key: &str, value: &str, category: &str) -> Result<(), String> {
-        let conn = self
-            .pool
-            .get()
-            .map_err(|e| format!("DB connection error: {e}"))?;
+        let conn = self.pool.get().map_err(|e| format!("DB connection error: {e}"))?;
 
         conn.execute(
             "INSERT INTO memory (key, value, category)
@@ -74,10 +68,7 @@ impl MemoryStore {
 
     /// Get a single memory entry by key.
     pub fn get(&self, key: &str) -> Result<Option<MemoryEntry>, String> {
-        let conn = self
-            .pool
-            .get()
-            .map_err(|e| format!("DB connection error: {e}"))?;
+        let conn = self.pool.get().map_err(|e| format!("DB connection error: {e}"))?;
 
         let mut stmt = conn
             .prepare("SELECT key, value, category, created_at FROM memory WHERE key = ?1")
@@ -100,10 +91,7 @@ impl MemoryStore {
 
     /// Delete a memory entry by key.
     pub fn delete(&self, key: &str) -> Result<bool, String> {
-        let conn = self
-            .pool
-            .get()
-            .map_err(|e| format!("DB connection error: {e}"))?;
+        let conn = self.pool.get().map_err(|e| format!("DB connection error: {e}"))?;
 
         let rows = conn
             .execute("DELETE FROM memory WHERE key = ?1", rusqlite::params![key])
@@ -114,10 +102,7 @@ impl MemoryStore {
 
     /// List all memory entries, optionally filtered by category.
     pub fn list(&self, category: Option<&str>) -> Result<Vec<MemoryEntry>, String> {
-        let conn = self
-            .pool
-            .get()
-            .map_err(|e| format!("DB connection error: {e}"))?;
+        let conn = self.pool.get().map_err(|e| format!("DB connection error: {e}"))?;
 
         let entries = if let Some(cat) = category {
             let mut stmt = conn
@@ -214,22 +199,17 @@ impl<T> OptionalExt<T> for Result<T, rusqlite::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
     use r2d2::Pool;
+    use std::path::PathBuf;
 
     fn setup_store() -> (MemoryStore, PathBuf) {
-        let dir = PathBuf::from(format!(
-            "/home/test/opengate_memory_test_{}",
-            uuid::Uuid::new_v4()
-        ));
+        let dir =
+            PathBuf::from(format!("/home/test/opengate_memory_test_{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&dir).unwrap();
         let db_path = dir.join("test.db");
 
         let manager = SqliteConnectionManager::file(db_path.to_str().unwrap());
-        let pool = Pool::builder()
-            .max_size(2)
-            .build(manager)
-            .expect("Failed to create pool");
+        let pool = Pool::builder().max_size(2).build(manager).expect("Failed to create pool");
 
         // Create tables
         let conn = pool.get().unwrap();
@@ -240,7 +220,7 @@ mod tests {
                 value TEXT NOT NULL,
                 category TEXT NOT NULL DEFAULT 'general',
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            );"
+            );",
         )
         .unwrap();
 

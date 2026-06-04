@@ -4,10 +4,10 @@ use std::time::Duration;
 use chrono::Utc;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
+    Terminal,
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
     style::{Style, Stylize},
-    Terminal,
 };
 use tokio::sync::mpsc;
 
@@ -18,7 +18,7 @@ use super::chat_view::ChatView;
 use super::input::InputArea;
 use super::status;
 use super::theme::Theme;
-use super::ws_client::{ws_client_task, WsCommand, WsEvent};
+use super::ws_client::{WsCommand, WsEvent, ws_client_task};
 
 pub struct ChatMessage {
     pub role: String,
@@ -128,12 +128,7 @@ impl TuiApp {
         self.messages.push(msg);
 
         let session = self.session_id.clone();
-        let _ = self
-            .ws_cmd_tx
-            .try_send(WsCommand::SendChat {
-                message: content,
-                session,
-            });
+        let _ = self.ws_cmd_tx.try_send(WsCommand::SendChat { message: content, session });
     }
 
     fn handle_ws_event(&mut self, event: WsEvent) {
@@ -181,11 +176,7 @@ impl TuiApp {
 
         let main = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Min(0),
-                Constraint::Length(5),
-            ])
+            .constraints([Constraint::Length(3), Constraint::Min(0), Constraint::Length(5)])
             .split(area);
 
         let sidebar_chat = Layout::default()
@@ -230,10 +221,9 @@ impl TuiApp {
             .border_style(sidebar_border)
             .style(Style::default().bg(self.theme.bg));
 
-        let sidebar_list =
-            ratatui::widgets::List::new(sidebar_items)
-                .block(sidebar_block)
-                .style(Style::default().bg(self.theme.bg));
+        let sidebar_list = ratatui::widgets::List::new(sidebar_items)
+            .block(sidebar_block)
+            .style(Style::default().bg(self.theme.bg));
         f.render_widget(sidebar_list, sidebar_chat[0]);
 
         self.chat.render(
@@ -244,12 +234,7 @@ impl TuiApp {
             self.focus == Focus::Chat,
         );
 
-        self.input.render(
-            f,
-            main[2],
-            &self.theme,
-            self.focus == Focus::Input,
-        );
+        self.input.render(f, main[2], &self.theme, self.focus == Focus::Input);
     }
 
     pub async fn run(config: Arc<config::Config>) -> anyhow::Result<()> {
@@ -288,10 +273,7 @@ impl TuiApp {
         }
 
         terminal.clear()?;
-        crossterm::execute!(
-            std::io::stdout(),
-            crossterm::terminal::LeaveAlternateScreen
-        )?;
+        crossterm::execute!(std::io::stdout(), crossterm::terminal::LeaveAlternateScreen)?;
         crossterm::terminal::disable_raw_mode()?;
 
         Ok(())

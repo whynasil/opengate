@@ -57,23 +57,14 @@ impl Tool for TerminalTool {
             .and_then(|v| v.as_str())
             .ok_or_else(|| "Missing required parameter: command".to_string())?;
 
-        let timeout_secs = params
-            .get("timeout")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(30);
+        let timeout_secs = params.get("timeout").and_then(|v| v.as_u64()).unwrap_or(30);
 
-        let workdir = params
-            .get("workdir")
-            .and_then(|v| v.as_str())
-            .unwrap_or(&self.default_workdir);
+        let workdir =
+            params.get("workdir").and_then(|v| v.as_str()).unwrap_or(&self.default_workdir);
 
         let output = timeout(
             std::time::Duration::from_secs(timeout_secs),
-            Command::new("sh")
-                .arg("-c")
-                .arg(cmd_str)
-                .current_dir(workdir)
-                .output(),
+            Command::new("sh").arg("-c").arg(cmd_str).current_dir(workdir).output(),
         )
         .await
         .map_err(|_| format!("Command timed out after {} seconds", timeout_secs))?

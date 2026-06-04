@@ -1,3 +1,6 @@
+//! Centralized error types — `GateError` enum using `thiserror`
+//! for all error domains across the gateway.
+
 use thiserror::Error;
 
 #[derive(Error, Debug)]

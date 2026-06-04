@@ -1,3 +1,6 @@
+//! Tool system — extensible tool registry with terminal, file,
+//! and browser tools for agent operations.
+
 use serde_json::Value;
 use std::collections::HashMap;
 

@@ -1,3 +1,6 @@
+//! Terminal UI — Ratatui-based interactive client with
+//! WebSocket connection, chat view, and input handling.
+
 pub mod app;
 pub mod chat_view;
 pub mod input;

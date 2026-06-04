@@ -12,11 +12,7 @@ pub struct AnthropicBackend {
 
 impl AnthropicBackend {
     pub fn new(api_key: impl Into<String>, model: impl Into<String>) -> Self {
-        Self {
-            api_key: api_key.into(),
-            model: model.into(),
-            client: Client::new(),
-        }
+        Self { api_key: api_key.into(), model: model.into(), client: Client::new() }
     }
 }
 
@@ -64,10 +60,7 @@ impl LlmBackend for AnthropicBackend {
             .ok_or_else(|| LlmError::Api("No content in response".to_string()))
     }
 
-    async fn stream_chat(
-        &self,
-        messages: Vec<LlmMessage>,
-    ) -> Result<ChatStream, LlmError> {
+    async fn stream_chat(&self, messages: Vec<LlmMessage>) -> Result<ChatStream, LlmError> {
         let url = "https://api.anthropic.com/v1/messages";
 
         let (system_prompt, anthropic_messages) = convert_messages(messages);
@@ -119,21 +112,18 @@ impl LlmBackend for AnthropicBackend {
                             }
 
                             if let Some(data) = event.strip_prefix("data: ")
-                                && let Ok(parsed) =
-                                    serde_json::from_str::<serde_json::Value>(data)
-                                {
-                                    match parsed["type"].as_str() {
-                                        Some("content_block_delta") => {
-                                            if let Some(text) =
-                                                parsed["delta"]["text"].as_str()
-                                            {
-                                                let _ = tx.send(Ok(text.to_string()));
-                                            }
+                                && let Ok(parsed) = serde_json::from_str::<serde_json::Value>(data)
+                            {
+                                match parsed["type"].as_str() {
+                                    Some("content_block_delta") => {
+                                        if let Some(text) = parsed["delta"]["text"].as_str() {
+                                            let _ = tx.send(Ok(text.to_string()));
                                         }
-                                        Some("message_stop") => return,
-                                        _ => {}
                                     }
+                                    Some("message_stop") => return,
+                                    _ => {}
                                 }
+                            }
                         }
                     }
                     Err(e) => {
@@ -150,18 +140,13 @@ impl LlmBackend for AnthropicBackend {
 
 /// Convert OpenAI-style role messages to Anthropic format.
 /// Anthropic requires alternating user/assistant, system goes top-level.
-fn convert_messages(
-    messages: Vec<LlmMessage>,
-) -> (Option<String>, Vec<serde_json::Value>) {
+fn convert_messages(messages: Vec<LlmMessage>) -> (Option<String>, Vec<serde_json::Value>) {
     let mut system_prompt: Option<String> = None;
     let mut anthropic_messages: Vec<serde_json::Value> = Vec::new();
 
     // Collect all system messages into one system prompt
-    let system_texts: Vec<String> = messages
-        .iter()
-        .filter(|m| m.role == "system")
-        .map(|m| m.content.clone())
-        .collect();
+    let system_texts: Vec<String> =
+        messages.iter().filter(|m| m.role == "system").map(|m| m.content.clone()).collect();
 
     if !system_texts.is_empty() {
         system_prompt = Some(system_texts.join("\n\n"));
@@ -202,18 +187,9 @@ mod tests {
     #[test]
     fn test_convert_messages_system_extraction() {
         let messages = vec![
-            LlmMessage {
-                role: "system".into(),
-                content: "You are helpful.".into(),
-            },
-            LlmMessage {
-                role: "user".into(),
-                content: "Hello".into(),
-            },
-            LlmMessage {
-                role: "assistant".into(),
-                content: "Hi!".into(),
-            },
+            LlmMessage { role: "system".into(), content: "You are helpful.".into() },
+            LlmMessage { role: "user".into(), content: "Hello".into() },
+            LlmMessage { role: "assistant".into(), content: "Hi!".into() },
         ];
 
         let (system, converted) = convert_messages(messages);
@@ -225,10 +201,7 @@ mod tests {
 
     #[test]
     fn test_convert_messages_no_system() {
-        let messages = vec![LlmMessage {
-            role: "user".into(),
-            content: "Hello".into(),
-        }];
+        let messages = vec![LlmMessage { role: "user".into(), content: "Hello".into() }];
 
         let (system, converted) = convert_messages(messages);
         assert_eq!(system, None);

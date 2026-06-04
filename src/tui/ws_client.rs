@@ -29,9 +29,7 @@ pub async fn ws_client_task(
     let (ws_stream, _) = match connect_async(&url).await {
         Ok(stream) => stream,
         Err(e) => {
-            let _ = event_tx
-                .send(WsEvent::Error(format!("Connection failed: {e}")))
-                .await;
+            let _ = event_tx.send(WsEvent::Error(format!("Connection failed: {e}"))).await;
             return;
         }
     };
@@ -42,9 +40,7 @@ pub async fn ws_client_task(
 
     let (mut write, mut read) = ws_stream.split();
 
-    let auth = ClientMessage::Auth {
-        token: auth_token.clone(),
-    };
+    let auth = ClientMessage::Auth { token: auth_token.clone() };
     if let Ok(data) = rmp_serde::to_vec(&auth) {
         let _ = write.send(Message::Binary(data)).await;
     }
