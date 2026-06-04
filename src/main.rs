@@ -1,6 +1,7 @@
 pub mod config;
 pub mod error;
 pub mod gateway;
+pub mod session;
 pub mod storage;
 
 use std::sync::Arc;
