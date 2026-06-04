@@ -1,6 +1,8 @@
 use serde_json::Value;
 use std::collections::HashMap;
 
+pub mod terminal;
+
 #[derive(Debug, Clone)]
 pub struct ToolDef {
     pub name: String,
@@ -51,6 +53,10 @@ impl ToolRegistry {
     pub fn get_tool(&self, name: &str) -> Option<&(dyn Tool + Send + Sync)> {
         self.tools.get(name).map(|t| t.as_ref())
     }
+}
+
+pub fn register_terminal_tool(registry: &mut ToolRegistry, default_workdir: String) {
+    registry.register(Box::new(terminal::TerminalTool::new(default_workdir)));
 }
 
 #[cfg(test)]
