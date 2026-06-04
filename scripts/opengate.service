@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenGate AI Agent Gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/opengate serve
+WorkingDirectory=/etc/opengate
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=opengate
+
+[Install]
+WantedBy=multi-user.target
