@@ -26,7 +26,8 @@ r2d2_sqlite = "0.25"
 # Telegram
 teloxide = { version = "0.14", features = ["rustls"], default-features = false }
 # Browser (CDP)
-chromiumoxide = "0.8"
+chromiumoxide = { version = "0.8", features = ["tokio-runtime"] }
+base64 = "0.22"
 # TUI
 ratatui = "0.29"
 crossterm = "0.28"

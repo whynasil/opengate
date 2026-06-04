@@ -1,6 +1,7 @@
 use serde_json::Value;
 use std::collections::HashMap;
 
+pub mod browser;
 pub mod file;
 pub mod terminal;
 
@@ -62,6 +63,10 @@ pub fn register_terminal_tool(registry: &mut ToolRegistry, default_workdir: Stri
 
 pub fn register_file_tool(registry: &mut ToolRegistry, workspace_root: String) {
     registry.register(Box::new(file::FileTool::new(workspace_root)));
+}
+
+pub fn register_browser_tool(registry: &mut ToolRegistry) {
+    registry.register(Box::new(browser::BrowserTool::new()));
 }
 
 #[cfg(test)]
