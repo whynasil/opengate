@@ -1,3 +1,4 @@
+pub mod webhook;
 pub mod telegram;
 
 use std::collections::HashMap;
@@ -105,6 +106,15 @@ pub fn register_telegram_channel(
     allowed_users: Vec<String>,
 ) {
     let channel = telegram::TelegramChannel::new(token, allowed_users);
+    manager.register(id, Box::new(channel));
+}
+
+pub fn register_webhook_channel(
+    manager: &mut ChannelManager,
+    id: ChannelId,
+    api_key: Option<String>,
+) {
+    let channel = webhook::WebhookChannel::new(api_key);
     manager.register(id, Box::new(channel));
 }
 
