@@ -1,3 +1,5 @@
+pub mod telegram;
+
 use std::collections::HashMap;
 use std::fmt;
 
@@ -94,6 +96,16 @@ impl ChannelManager {
     pub fn get(&self, id: &ChannelId) -> Option<&dyn Channel> {
         self.channels.get(id).map(|c| c.as_ref())
     }
+}
+
+pub fn register_telegram_channel(
+    manager: &mut ChannelManager,
+    id: ChannelId,
+    token: String,
+    allowed_users: Vec<String>,
+) {
+    let channel = telegram::TelegramChannel::new(token, allowed_users);
+    manager.register(id, Box::new(channel));
 }
 
 #[cfg(test)]
