@@ -131,18 +131,22 @@ impl LlmBackend for OpenAiBackend {
         let mut byte_stream = response.bytes_stream();
 
         tokio::spawn(async move {
-            let mut text_buf = String::new();
+            let mut buf: Vec<u8> = Vec::with_capacity(4096);
 
             while let Some(chunk_result) = byte_stream.next().await {
                 match chunk_result {
                     Ok(chunk) => {
-                        text_buf.push_str(&String::from_utf8_lossy(&chunk));
+                        buf.extend_from_slice(&chunk);
 
-                        while let Some(pos) = text_buf.find("\n\n") {
-                            let event = text_buf[..pos].to_string();
-                            text_buf = text_buf[pos + 2..].to_string();
-
-                            for line in event.lines() {
+                        // Process complete SSE events (separated by \n\n)
+                        while let Some(pos) = buf
+                            .windows(2)
+                            .position(|w| w == b"\n\n")
+                        {
+                            let event_bytes = &buf[..pos];
+                            // Parse lines within this event
+                            let event_text = String::from_utf8_lossy(event_bytes);
+                            for line in event_text.lines() {
                                 if let Some(data) = line.strip_prefix("data: ") {
                                     let data = data.trim();
                                     if data == "[DONE]" {
@@ -157,6 +161,8 @@ impl LlmBackend for OpenAiBackend {
                                     }
                                 }
                             }
+                            // Drain processed bytes (event + separator)
+                            buf.drain(..pos + 2);
                         }
                     }
                     Err(e) => {
