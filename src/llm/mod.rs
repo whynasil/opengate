@@ -1,6 +1,9 @@
 use std::future::Future;
 use std::pin::Pin;
 
+pub mod anthropic;
+pub mod ollama;
+
 use futures::Stream;
 use futures::StreamExt;
 use reqwest::Client;
