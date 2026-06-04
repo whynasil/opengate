@@ -293,6 +293,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires headless chromium with display"]
     async fn test_browser_navigate_and_snapshot() {
         if !chromium_available() {
             eprintln!("Skipping browser test: CHROME_PATH not available");
