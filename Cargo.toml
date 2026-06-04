@@ -29,7 +29,7 @@ teloxide = { version = "0.14", features = ["rustls"], default-features = false }
 chromiumoxide = { version = "0.8", features = ["tokio-runtime"] }
 base64 = "0.22"
 # TUI
-ratatui = "0.29"
+ratatui = "0.30"
 crossterm = "0.28"
 tui-textarea = "0.7"
 # Crypto
