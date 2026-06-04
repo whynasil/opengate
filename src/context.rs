@@ -66,9 +66,7 @@ mod tests {
 
         let session = pool.create_session().expect("Failed to create session");
 
-        let messages = builder
-            .build(&session.id, "Hello")
-            .expect("Build failed");
+        let messages = builder.build(&session.id, "Hello").expect("Build failed");
 
         assert!(!messages.is_empty());
         assert_eq!(messages[0].role, "system");

@@ -43,10 +43,7 @@ impl SessionPool {
         self.storage.insert_message(session_id, role, content)
     }
 
-    pub fn get_messages(
-        &self,
-        session_id: &str,
-    ) -> Result<Vec<Message>, StorageError> {
+    pub fn get_messages(&self, session_id: &str) -> Result<Vec<Message>, StorageError> {
         self.storage.get_messages(session_id)
     }
 }

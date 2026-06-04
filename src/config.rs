@@ -118,8 +118,8 @@ impl Config {
 
             if let Some(end) = rest.find('}') {
                 let var_name = &rest[..end];
-                let value =
-                    std::env::var(var_name).map_err(|_| ConfigError::EnvVar(var_name.to_string()))?;
+                let value = std::env::var(var_name)
+                    .map_err(|_| ConfigError::EnvVar(var_name.to_string()))?;
                 result.push_str(&value);
                 rest = &rest[end + 1..];
             } else {

@@ -58,7 +58,10 @@ impl AgentLoop {
 
     pub async fn cancel(&self, session_id: &str) {
         let mut states = self.states.lock().await;
-        states.insert(session_id.to_string(), AgentState::Error("cancelled".to_string()));
+        states.insert(
+            session_id.to_string(),
+            AgentState::Error("cancelled".to_string()),
+        );
     }
 
     pub async fn get_state(&self, session_id: &str) -> Option<AgentState> {

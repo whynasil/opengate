@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use axum::{
+    Json, Router,
     extract::{
-        ws::{Message, WebSocket, WebSocketUpgrade},
         State,
+        ws::{Message, WebSocket, WebSocketUpgrade},
     },
     response::IntoResponse,
     routing::get,
-    Json, Router,
 };
 use futures::{
     sink::SinkExt,
@@ -108,9 +108,7 @@ impl Gateway {
         let listener = tokio::net::TcpListener::bind(&addr)
             .await
             .expect("Failed to bind gateway address");
-        axum::serve(listener, app)
-            .await
-            .expect("Gateway failed");
+        axum::serve(listener, app).await.expect("Gateway failed");
     }
 }
 
@@ -182,7 +180,10 @@ async fn handle_socket(socket: WebSocket, gateway: Arc<Gateway>) {
             match client_msg {
                 ClientMessage::Auth { token } if token == *auth_token => {
                     authenticated = true;
-                    if encode_and_send(&mut sender, &ServerMessage::AuthOk).await.is_err() {
+                    if encode_and_send(&mut sender, &ServerMessage::AuthOk)
+                        .await
+                        .is_err()
+                    {
                         break;
                     }
                 }
@@ -245,7 +246,10 @@ async fn handle_socket(socket: WebSocket, gateway: Arc<Gateway>) {
                     }
                 }
                 ClientMessage::Ping => {
-                    if encode_and_send(&mut sender, &ServerMessage::Pong).await.is_err() {
+                    if encode_and_send(&mut sender, &ServerMessage::Pong)
+                        .await
+                        .is_err()
+                    {
                         break;
                     }
                 }
@@ -274,5 +278,8 @@ async fn encode_and_send(
     msg: &ServerMessage,
 ) -> Result<(), ()> {
     let data = rmp_serde::to_vec(msg).expect("ServerMessage serialization should not fail");
-    sender.send(Message::Binary(data.into())).await.map_err(|_| ())
+    sender
+        .send(Message::Binary(data.into()))
+        .await
+        .map_err(|_| ())
 }

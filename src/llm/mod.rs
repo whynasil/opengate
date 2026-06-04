@@ -27,7 +27,10 @@ pub enum LlmError {
 type ChatStream = Pin<Box<dyn Stream<Item = Result<String, LlmError>> + Send>>;
 
 pub trait LlmBackend: Send + Sync {
-    fn chat(&self, messages: Vec<LlmMessage>) -> impl Future<Output = Result<String, LlmError>> + Send;
+    fn chat(
+        &self,
+        messages: Vec<LlmMessage>,
+    ) -> impl Future<Output = Result<String, LlmError>> + Send;
     fn stream_chat(
         &self,
         messages: Vec<LlmMessage>,
@@ -42,7 +45,11 @@ pub struct OpenAiBackend {
 }
 
 impl OpenAiBackend {
-    pub fn new(api_key: impl Into<String>, base_url: impl Into<String>, model: impl Into<String>) -> Self {
+    pub fn new(
+        api_key: impl Into<String>,
+        base_url: impl Into<String>,
+        model: impl Into<String>,
+    ) -> Self {
         Self {
             api_key: api_key.into(),
             base_url: base_url.into(),
@@ -137,9 +144,8 @@ impl LlmBackend for OpenAiBackend {
                                     }
                                     if let Ok(parsed) =
                                         serde_json::from_str::<serde_json::Value>(data)
-                                        && let Some(content) = parsed["choices"][0]["delta"]
-                                            ["content"]
-                                            .as_str()
+                                        && let Some(content) =
+                                            parsed["choices"][0]["delta"]["content"].as_str()
                                     {
                                         let _ = tx.send(Ok(content.to_string()));
                                     }

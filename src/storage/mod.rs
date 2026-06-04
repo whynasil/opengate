@@ -111,7 +111,9 @@ impl Storage {
 
     pub fn list_sessions(&self) -> Result<Vec<Session>, StorageError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare("SELECT id, created_at, updated_at, metadata FROM sessions ORDER BY created_at DESC")?;
+        let mut stmt = conn.prepare(
+            "SELECT id, created_at, updated_at, metadata FROM sessions ORDER BY created_at DESC",
+        )?;
         let sessions = stmt
             .query_map([], |row| {
                 let metadata_str: String = row.get(3)?;
@@ -139,8 +141,8 @@ impl Storage {
 
     pub fn get_session(&self, id: &str) -> Result<Session, StorageError> {
         let conn = self.pool.get()?;
-        let mut stmt =
-            conn.prepare("SELECT id, created_at, updated_at, metadata FROM sessions WHERE id = ?1")?;
+        let mut stmt = conn
+            .prepare("SELECT id, created_at, updated_at, metadata FROM sessions WHERE id = ?1")?;
         let result = stmt
             .query_row(params![id], |row| {
                 let metadata_str: String = row.get(3)?;
@@ -152,9 +154,7 @@ impl Storage {
                 ))
             })
             .map_err(|e| match e {
-                rusqlite::Error::QueryReturnedNoRows => {
-                    StorageError::NotFound(id.to_string())
-                }
+                rusqlite::Error::QueryReturnedNoRows => StorageError::NotFound(id.to_string()),
                 other => StorageError::Db(other),
             })?;
         let (id, created_at, updated_at, metadata_str) = result;
