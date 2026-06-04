@@ -96,7 +96,7 @@ fn test_tool_registry() {
     let mut registry = tools::ToolRegistry::new();
     registry.register(Box::new(TerminalTool::new("/home/test".to_string())));
     let tools = registry.list_tools();
-    assert!(tools.iter().any(|name| *name == "terminal"));
+    assert!(tools.contains(&"terminal"));
 }
 
 // ── Channels ──

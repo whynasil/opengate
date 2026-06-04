@@ -55,6 +55,11 @@ pub struct Storage {
 }
 
 impl Storage {
+    /// Open or create the storage database.
+    ///
+    /// # Errors
+    /// Returns `StorageError` if the database cannot be opened.
+    #[must_use = "the opened Storage must be used or memory operations are leaked"]
     pub fn open(path: &str) -> Result<Self, StorageError> {
         let manager = if path == ":memory:" {
             SqliteConnectionManager::memory()

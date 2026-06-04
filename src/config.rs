@@ -76,6 +76,11 @@ pub struct Workspace {
 }
 
 impl Config {
+    /// Load configuration from a TOML file with env-var interpolation.
+    ///
+    /// # Errors
+    /// Returns `ConfigError` if the file cannot be read, parsed, or has missing env vars.
+    #[must_use = "the Config result must be used; ignoring it discards the load"]
     pub fn load(path: impl AsRef<Path>) -> Result<Self, ConfigError> {
         let content = std::fs::read_to_string(path.as_ref())?;
         let interpolated = Self::interpolate(&content)?;

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use clap::{Parser, Subcommand};
@@ -42,31 +42,28 @@ enum ConfigCmd {
     },
 }
 
-fn get_config_path() -> String {
-    std::env::var("CONFIG_PATH").unwrap_or_else(|_| "config/default.toml".to_string())
-}
+async fn do_serve(config_path: &str) {
+    let config = match config::Config::load(config_path) {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            eprintln!("error: failed to load config from '{config_path}': {e}");
+            std::process::exit(1);
+        }
+    };
 
-fn do_serve(config_path: &str) {
-    let rt = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
-    rt.block_on(async {
-        let config = match config::Config::load(config_path) {
-            Ok(cfg) => cfg,
-            Err(e) => {
-                eprintln!("error: failed to load config from '{config_path}': {e}");
-                std::process::exit(1);
-            }
-        };
+    let storage = match Storage::open(&config.workspace.path) {
+        Ok(s) => Arc::new(s),
+        Err(e) => {
+            eprintln!("error: failed to open storage: {e}");
+            std::process::exit(1);
+        }
+    };
 
-        let storage = Arc::new(
-            Storage::open(&config.workspace.path).expect("Failed to open storage"),
-        );
-        let session_pool = Arc::new(SessionPool::new(storage.clone()));
-        let agent_loop = Arc::new(AgentLoop::new(session_pool.clone(), 50));
+    let session_pool = Arc::new(SessionPool::new(storage.clone()));
+    let agent_loop = Arc::new(AgentLoop::new(session_pool.clone(), 50));
 
-        let gateway = Gateway::new(storage, session_pool, agent_loop, Arc::new(config));
-
-        gateway.start().await;
-    });
+    let gateway = Gateway::new(storage, session_pool, agent_loop, Arc::new(config));
+    gateway.start().await;
 }
 
 fn do_tui() {
@@ -74,7 +71,7 @@ fn do_tui() {
 }
 
 fn do_config_path() {
-    println!("{}", get_config_path());
+    println!("config/default.toml");
 }
 
 fn do_config_validate(config_path: &str) {
@@ -87,12 +84,19 @@ fn do_config_validate(config_path: &str) {
     }
 }
 
-fn main() {
+fn path_to_str(p: &Path) -> &str {
+    // Use lossy conversion — non-UTF8 paths are extremely rare
+    // and the config file path is always ASCII anyway.
+    Box::leak(p.to_string_lossy().into_owned().into_boxed_str())
+}
+
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Serve { config } => {
-            do_serve(config.to_str().unwrap_or("config/default.toml"));
+        Commands::Serve { ref config } => {
+            do_serve(path_to_str(config)).await;
         }
         Commands::Tui => {
             do_tui();
@@ -101,8 +105,8 @@ fn main() {
             ConfigCmd::Path => {
                 do_config_path();
             }
-            ConfigCmd::Validate { config } => {
-                do_config_validate(config.to_str().unwrap_or("config/default.toml"));
+            ConfigCmd::Validate { ref config } => {
+                do_config_validate(path_to_str(config));
             }
         },
     }

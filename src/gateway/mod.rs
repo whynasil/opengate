@@ -277,7 +277,9 @@ async fn encode_and_send(
     sender: &mut SplitSink<WebSocket, Message>,
     msg: &ServerMessage,
 ) -> Result<(), ()> {
-    let data = rmp_serde::to_vec(msg).expect("ServerMessage serialization should not fail");
+    let data = rmp_serde::to_vec(msg).map_err(|e| {
+        tracing::error!("MessagePack serialization failed: {e}");
+    })?;
     sender
         .send(Message::Binary(data.into()))
         .await
