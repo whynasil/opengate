@@ -2,14 +2,10 @@ use std::sync::Arc;
 
 use crate::session::SessionPool;
 
+pub use crate::llm::LlmMessage;
+
 pub const SYSTEM_PROMPT: &str = "You are OpenGate, a high-performance AI agent gateway. \
 You are concise, system-aware, and efficient. Respond to user queries directly and accurately.";
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct LlmMessage {
-    pub role: String,
-    pub content: String,
-}
 
 pub struct ContextBuilder {
     session_pool: Arc<SessionPool>,

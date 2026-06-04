@@ -3,6 +3,7 @@ pub mod config;
 pub mod context;
 pub mod error;
 pub mod gateway;
+pub mod llm;
 pub mod session;
 pub mod storage;
 
