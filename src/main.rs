@@ -6,6 +6,7 @@ pub mod gateway;
 pub mod llm;
 pub mod session;
 pub mod storage;
+pub mod tools;
 
 use std::sync::Arc;
 
