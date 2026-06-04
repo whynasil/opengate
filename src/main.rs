@@ -39,6 +39,9 @@ async fn main() {
 
     let config = Arc::new(config);
 
+    let session_pool = Arc::new(session::SessionPool::new(Arc::clone(&storage)));
+    let agent_loop = Arc::new(agent::AgentLoop::new(Arc::clone(&session_pool), 10));
+
     println!();
     println!("  ╔══════════════════════════════════════════════════╗");
     println!("  ║               OpenGate v0.1.0                    ║");
@@ -47,7 +50,7 @@ async fn main() {
     println!("  ╚══════════════════════════════════════════════════╝");
     println!();
 
-    let gateway = gateway::Gateway::new(storage, config);
+    let gateway = gateway::Gateway::new(storage, session_pool, agent_loop, config);
     gateway.start().await;
 }
 

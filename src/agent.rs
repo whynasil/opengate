@@ -41,13 +41,11 @@ impl AgentLoop {
 
         self.session_pool
             .add_message(session_id, "user", user_message)
-            .await
             .map_err(|e| GateError::Storage(e.to_string()))?;
 
         let response = format!("Echo: {user_message}");
         self.session_pool
             .add_message(session_id, "assistant", &response)
-            .await
             .map_err(|e| GateError::Storage(e.to_string()))?;
 
         {
@@ -76,11 +74,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_agent_echo_response() {
-        let storage = Storage::open(":memory:").expect("Failed to open in-memory DB");
+        let storage = Arc::new(Storage::open(":memory:").expect("Failed to open in-memory DB"));
         let pool = Arc::new(SessionPool::new(storage));
         let agent = AgentLoop::new(pool.clone(), 5);
 
-        let session = pool.create_session().await.expect("Failed to create session");
+        let session = pool.create_session().expect("Failed to create session");
 
         agent
             .run(&session.id, "Hello, agent!")
@@ -94,7 +92,6 @@ mod tests {
 
         let messages = pool
             .get_messages(&session.id)
-            .await
             .expect("Failed to get messages");
         assert_eq!(messages.len(), 2);
         assert_eq!(messages[0].role, "user");

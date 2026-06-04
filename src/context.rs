@@ -16,7 +16,7 @@ impl ContextBuilder {
         Self { session_pool }
     }
 
-    pub async fn build(
+    pub fn build(
         &self,
         session_id: &str,
         user_message: &str,
@@ -31,7 +31,6 @@ impl ContextBuilder {
         let history = self
             .session_pool
             .get_messages(session_id)
-            .await
             .map_err(|e| crate::error::GateError::Storage(e.to_string()))?;
 
         for msg in &history {
@@ -59,17 +58,16 @@ mod tests {
     use super::*;
     use crate::storage::Storage;
 
-    #[tokio::test]
-    async fn test_build_system_prompt_is_first() {
-        let storage = Storage::open(":memory:").expect("Failed to open in-memory DB");
+    #[test]
+    fn test_build_system_prompt_is_first() {
+        let storage = Arc::new(Storage::open(":memory:").expect("Failed to open in-memory DB"));
         let pool = Arc::new(SessionPool::new(storage));
         let builder = ContextBuilder::new(pool.clone());
 
-        let session = pool.create_session().await.expect("Failed to create session");
+        let session = pool.create_session().expect("Failed to create session");
 
         let messages = builder
             .build(&session.id, "Hello")
-            .await
             .expect("Build failed");
 
         assert!(!messages.is_empty());
@@ -77,24 +75,21 @@ mod tests {
         assert_eq!(messages[0].content, SYSTEM_PROMPT);
     }
 
-    #[tokio::test]
-    async fn test_build_history_loaded() {
-        let storage = Storage::open(":memory:").expect("Failed to open in-memory DB");
+    #[test]
+    fn test_build_history_loaded() {
+        let storage = Arc::new(Storage::open(":memory:").expect("Failed to open in-memory DB"));
         let pool = Arc::new(SessionPool::new(storage));
         let builder = ContextBuilder::new(pool.clone());
 
-        let session = pool.create_session().await.expect("Failed to create session");
+        let session = pool.create_session().expect("Failed to create session");
 
         pool.add_message(&session.id, "user", "First message")
-            .await
             .expect("Failed to add message");
         pool.add_message(&session.id, "assistant", "First response")
-            .await
             .expect("Failed to add message");
 
         let messages = builder
             .build(&session.id, "Second message")
-            .await
             .expect("Build failed");
 
         assert_eq!(messages.len(), 4);

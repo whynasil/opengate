@@ -17,7 +17,9 @@ use serde::{Deserialize, Serialize};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{info, warn};
 
+use crate::agent::AgentLoop;
 use crate::config;
+use crate::session::SessionPool;
 use crate::storage::Storage;
 
 // ---------------------------------------------------------------------------
@@ -76,12 +78,24 @@ pub fn build_router(state: Arc<Gateway>) -> Router {
 pub struct Gateway {
     #[allow(dead_code)]
     storage: Arc<Storage>,
+    session_pool: Arc<SessionPool>,
+    agent_loop: Arc<AgentLoop>,
     config: Arc<config::Config>,
 }
 
 impl Gateway {
-    pub fn new(storage: Arc<Storage>, config: Arc<config::Config>) -> Self {
-        Self { storage, config }
+    pub fn new(
+        storage: Arc<Storage>,
+        session_pool: Arc<SessionPool>,
+        agent_loop: Arc<AgentLoop>,
+        config: Arc<config::Config>,
+    ) -> Self {
+        Self {
+            storage,
+            session_pool,
+            agent_loop,
+            config,
+        }
     }
 
     pub async fn start(self) {
@@ -192,9 +206,39 @@ async fn handle_socket(socket: WebSocket, gateway: Arc<Gateway>) {
         } else {
             match client_msg {
                 ClientMessage::Chat { message, session } => {
+                    let session_id = if session.is_empty() {
+                        match gateway.session_pool.create_session() {
+                            Ok(s) => {
+                                info!("Created new session: {}", s.id);
+                                s.id
+                            }
+                            Err(e) => {
+                                let err = ServerMessage::Error {
+                                    code: "SESSION_ERROR".into(),
+                                    message: format!("Failed to create session: {e}"),
+                                };
+                                let _ = encode_and_send(&mut sender, &err).await;
+                                break;
+                            }
+                        }
+                    } else {
+                        session
+                    };
+
+                    let agent = gateway.agent_loop.clone();
+                    let sid = session_id.clone();
+                    let msg = message.clone();
+
+                    tokio::spawn(async move {
+                        if let Err(e) = agent.run(&sid, &msg).await {
+                            warn!("Agent run error for session {sid}: {e}");
+                        }
+                    });
+
+                    // Respond synchronously with acknowledgement
                     let resp = ServerMessage::ChatResponse {
-                        content: format!("Echo: {message}"),
-                        session,
+                        content: format!("Processing: {message}"),
+                        session: session_id,
                     };
                     if encode_and_send(&mut sender, &resp).await.is_err() {
                         break;
