@@ -24,7 +24,7 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 r2d2 = "0.8"
 r2d2_sqlite = "0.25"
 # Telegram
-teloxide = { version = "0.14", features = ["rustls"], default-features = false }
+teloxide = { version = "0.17", features = ["rustls"], default-features = false }
 # Browser (CDP)
 chromiumoxide = { version = "0.8", features = ["tokio-runtime"] }
 base64 = "0.22"
