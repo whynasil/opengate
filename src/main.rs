@@ -1,4 +1,5 @@
 pub mod config;
+pub mod error;
 
 fn main() {
     println!("OpenGate v0.1.0 — High-Performance AI Agent Gateway");
