@@ -1,16 +1,10 @@
-pub mod agent;
-pub mod channels;
-pub mod config;
-pub mod context;
-pub mod error;
-pub mod gateway;
-pub mod llm;
-pub mod session;
-pub mod storage;
-pub mod tools;
-pub mod tui;
-
 use std::sync::Arc;
+
+use opengate::agent::AgentLoop;
+use opengate::config;
+use opengate::gateway::Gateway;
+use opengate::session::SessionPool;
+use opengate::storage::Storage;
 
 #[tokio::main]
 async fn main() {
@@ -25,46 +19,13 @@ async fn main() {
         }
     };
 
-    let workspace_path = expand_tilde(&config.workspace.path);
-    if let Err(e) = std::fs::create_dir_all(&workspace_path) {
-        eprintln!("error: failed to create workspace directory '{workspace_path}': {e}");
-        std::process::exit(1);
-    }
-    let db_path = format!("{workspace_path}/opengate.db");
+    let storage = Arc::new(
+        Storage::open(&config.workspace.path).expect("Failed to open storage"),
+    );
+    let session_pool = Arc::new(SessionPool::new(storage.clone()));
+    let agent_loop = Arc::new(AgentLoop::new(session_pool.clone(), 50));
 
-    let storage = match storage::Storage::open(&db_path) {
-        Ok(s) => Arc::new(s),
-        Err(e) => {
-            eprintln!("error: failed to open storage at '{db_path}': {e}");
-            std::process::exit(1);
-        }
-    };
+    let gateway = Gateway::new(storage, session_pool, agent_loop, Arc::new(config));
 
-    let config = Arc::new(config);
-
-    let session_pool = Arc::new(session::SessionPool::new(Arc::clone(&storage)));
-    let agent_loop = Arc::new(agent::AgentLoop::new(Arc::clone(&session_pool), 10));
-
-    println!();
-    println!("  ╔══════════════════════════════════════════════════╗");
-    println!("  ║               OpenGate v0.1.0                    ║");
-    println!("  ║     High-Performance AI Agent Gateway            ║");
-    println!("  ║     https://github.com/whynasil/opengate         ║");
-    println!("  ╚══════════════════════════════════════════════════╝");
-    println!();
-
-    let gateway = gateway::Gateway::new(storage, session_pool, agent_loop, config);
     gateway.start().await;
-}
-
-fn expand_tilde(path: &str) -> String {
-    let trimmed = path.trim();
-    if trimmed == "~" {
-        return std::env::var("HOME").unwrap_or_else(|_| "~".to_string());
-    }
-    if let Some(rest) = trimmed.strip_prefix("~/") {
-        let home = std::env::var("HOME").unwrap_or_else(|_| "~".to_string());
-        return format!("{home}/{rest}");
-    }
-    trimmed.to_string()
 }

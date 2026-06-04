@@ -63,3 +63,7 @@ lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
+
+[lib]
+name = "opengate"
+path = "src/lib.rs"
