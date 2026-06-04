@@ -22,6 +22,12 @@ impl std::fmt::Debug for BrowserTool {
     }
 }
 
+impl Default for BrowserTool {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BrowserTool {
     pub fn new() -> Self {
         let chrome_path =
