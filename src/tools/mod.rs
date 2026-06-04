@@ -1,6 +1,7 @@
 use serde_json::Value;
 use std::collections::HashMap;
 
+pub mod file;
 pub mod terminal;
 
 #[derive(Debug, Clone)]
@@ -57,6 +58,10 @@ impl ToolRegistry {
 
 pub fn register_terminal_tool(registry: &mut ToolRegistry, default_workdir: String) {
     registry.register(Box::new(terminal::TerminalTool::new(default_workdir)));
+}
+
+pub fn register_file_tool(registry: &mut ToolRegistry, workspace_root: String) {
+    registry.register(Box::new(file::FileTool::new(workspace_root)));
 }
 
 #[cfg(test)]

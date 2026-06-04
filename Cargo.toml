@@ -50,6 +50,11 @@ uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 # WebSocket client (for TUI)
 tokio-tungstenite = { version = "0.24", features = ["__rustls-tls"] }
+# Filesystem traversal
+walkdir = "2"
+
+[dev-dependencies]
+tempfile = "3"
 
 [profile.release]
 opt-level = "z"
