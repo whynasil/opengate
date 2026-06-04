@@ -1,3 +1,5 @@
+pub mod memory;
+
 use chrono::Utc;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -91,6 +93,11 @@ impl Storage {
             ",
         )?;
         Ok(())
+    }
+
+    /// Access the connection pool directly (for memory system etc).
+    pub fn pool(&self) -> &Pool<SqliteConnectionManager> {
+        &self.pool
     }
 
     pub fn create_session(&self) -> Result<Session, StorageError> {
