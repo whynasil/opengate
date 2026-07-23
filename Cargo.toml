@@ -52,7 +52,7 @@ uuid = { version = "1", features = ["v4"] }
 # Time
 chrono = { version = "0.4", features = ["serde"] }
 # WebSocket client (for TUI)
-tokio-tungstenite = { version = "0.24", features = ["__rustls-tls"] }
+tokio-tungstenite = { version = "0.29", features = ["__rustls-tls"] }
 # Filesystem traversal
 walkdir = "2"
 
